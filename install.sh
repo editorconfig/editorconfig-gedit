@@ -23,3 +23,11 @@ echo "Copying $installfiles to $installdir..."
 mkdir -p $installdir &&
 cp -rfL $installfiles $installdir &&
 echo "Done."
+echo ""
+echo "Installing EditorConfig Python Core..."
+cd editorconfig-core-py
+if [ "$(id -u)" -ne "0" ] ; then
+    python setup.py install --user
+else
+    python setup.py install
+fi
