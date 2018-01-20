@@ -1,12 +1,18 @@
-from os.path import abspath
-import sys
 import logging
+import os.path
+import sys
 
-editorconfig_path = abspath('editorconfig-core-py/')
+editorconfig_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                 '..',
+                                                 'editorconfig-core-py/'))
 if editorconfig_path not in sys.path:
-    sys.path.append(editorconfig_path)
+    sys.path.insert(0, editorconfig_path)
 
 from editorconfig import get_properties, EditorConfigError
+
+logging.basicConfig(format='%(levelname)s:%(funcName)s:%(message)s',
+                    level=logging.INFO)
+log = logging.getLogger('shared')
 
 
 class EditorConfigPluginMixin(object):
