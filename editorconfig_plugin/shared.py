@@ -1,8 +1,10 @@
-from os.path import abspath
+import os
 import sys
 import logging
 
-editorconfig_path = abspath('editorconfig-core-py/')
+plugin_dir = os.path.dirname(__file__)
+lib_dir = os.path.join(plugin_dir, '..', 'editorconfig-core-py')
+editorconfig_path = os.path.abspath(lib_dir)
 if editorconfig_path not in sys.path:
     sys.path.append(editorconfig_path)
 
