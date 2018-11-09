@@ -3,15 +3,15 @@
 Provides ``EditorConfigHandler`` class for locating and parsing
 EditorConfig files relevant to a given filepath.
 
-Licensed under PSF License (see LICENSE.txt file).
+Licensed under Simplified BSD License (see LICENSE.BSD file).
 
 """
 
 import os
 
 from editorconfig import VERSION
-from editorconfig.ini import EditorConfigParser
 from editorconfig.exceptions import PathError, VersionError
+from editorconfig.ini import EditorConfigParser
 
 
 __all__ = ['EditorConfigHandler']
@@ -40,7 +40,8 @@ class EditorConfigHandler(object):
 
     """
 
-    def __init__(self, filepath, conf_filename='.editorconfig', version=None):
+    def __init__(self, filepath, conf_filename='.editorconfig',
+                 version=VERSION):
         """Create EditorConfigHandler for matching given filepath"""
         self.filepath = filepath
         self.conf_filename = conf_filename
@@ -93,7 +94,7 @@ class EditorConfigHandler(object):
         # Raise ``VersionError`` if version specified is greater than current
         if self.version is not None and self.version[:3] > VERSION[:3]:
             raise VersionError(
-                    "Required version is greater than the current version.")
+                "Required version is greater than the current version.")
 
     def preprocess_values(self):
 
@@ -102,18 +103,25 @@ class EditorConfigHandler(object):
         opts = self.options
 
         # Lowercase option value for certain options
-        for name in ["end_of_line", "indent_style", "indent_size"]:
+        for name in ["end_of_line", "indent_style", "indent_size",
+                     "insert_final_newline", "trim_trailing_whitespace",
+                     "charset"]:
             if name in opts:
                 opts[name] = opts[name].lower()
 
         # Set indent_size to "tab" if indent_size is unspecified and
         # indent_style is set to "tab".
         if (opts.get("indent_style") == "tab" and
-            not "indent_size" in opts and self.version >= VERSION[:3]):
+                not "indent_size" in opts and self.version >= (0, 10, 0)):
             opts["indent_size"] = "tab"
 
         # Set tab_width to indent_size if indent_size is specified and
         # tab_width is unspecified
         if ("indent_size" in opts and "tab_width" not in opts and
-            opts["indent_size"] != "tab"):
+                opts["indent_size"] != "tab"):
             opts["tab_width"] = opts["indent_size"]
+
+        # Set indent_size to tab_width if indent_size is "tab"
+        if ("indent_size" in opts and "tab_width" in opts and
+                opts["indent_size"] == "tab"):
+            opts["indent_size"] = opts["tab_width"]

@@ -1,20 +1,21 @@
 """EditorConfig command line interface
 
-Licensed under PSF License (see LICENSE.txt file).
+Licensed under Simplified BSD License (see LICENSE.BSD file).
 
 """
 
 import getopt
 import sys
 
-from editorconfig import __version__, VERSION
-from editorconfig.versiontools import split_version
-from editorconfig.handler import EditorConfigHandler
+from editorconfig import VERSION, __version__
+from editorconfig.compat import force_unicode
 from editorconfig.exceptions import ParsingError, PathError, VersionError
+from editorconfig.handler import EditorConfigHandler
+from editorconfig.versiontools import split_version
 
 
 def version():
-    print "Version %s" % __version__
+    print("EditorConfig Python Core Version %s" % __version__)
 
 
 def usage(command, error=False):
@@ -22,24 +23,22 @@ def usage(command, error=False):
         out = sys.stderr
     else:
         out = sys.stdout
-    print >> out, "%s [OPTIONS] FILENAME" % command
-    print >> out, ('-f                 '
-            'Specify conf filename other than ".editorconfig".')
-    print >> out, ("-b                 "
-            "Specify version (used by devs to test compatibility).")
-    print >> out, "-h OR --help       Print this help message."
-    print >> out, "-v OR --version    Display version information."
+    out.write("%s [OPTIONS] FILENAME\n" % command)
+    out.write('-f                 '
+              'Specify conf filename other than ".editorconfig".\n')
+    out.write("-b                 "
+              "Specify version (used by devs to test compatibility).\n")
+    out.write("-h OR --help       Print this help message.\n")
+    out.write("-v OR --version    Display version information.\n")
 
 
 def main():
     command_name = sys.argv[0]
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "vhb:f:", ["version", "help"])
-    except getopt.GetoptError, err:
-        print str(err)
-        usage(command_name, error=True)
-        sys.exit(2)
-    if len(args) > 1:
+        opts, args = getopt.getopt(list(map(force_unicode, sys.argv[1:])),
+                                   "vhb:f:", ["version", "help"])
+    except getopt.GetoptError as e:
+        print(str(e))
         usage(command_name, error=True)
         sys.exit(2)
 
@@ -63,13 +62,17 @@ def main():
     if len(args) < 1:
         usage(command_name, error=True)
         sys.exit(2)
-    filename = args[0]
+    filenames = args
+    multiple_files = len(args) > 1
 
-    handler = EditorConfigHandler(filename, conf_filename, version_tuple)
-    try:
-        options = handler.get_configurations()
-    except (ParsingError, PathError, VersionError), e:
-        print >> sys.stderr, str(e)
-        sys.exit(2)
-    for key, value in options.items():
-        print "%s=%s" % (key, value)
+    for filename in filenames:
+        handler = EditorConfigHandler(filename, conf_filename, version_tuple)
+        try:
+            options = handler.get_configurations()
+        except (ParsingError, PathError, VersionError) as e:
+            print(str(e))
+            sys.exit(2)
+        if multiple_files:
+            print("[%s]" % filename)
+        for key, value in options.items():
+            print("%s=%s" % (key, value))

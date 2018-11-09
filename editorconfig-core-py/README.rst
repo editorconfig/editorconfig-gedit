@@ -1,12 +1,20 @@
 ========================
 EditorConfig Python Core
 ========================
+.. image:: https://img.shields.io/pypi/v/EditorConfig.svg
+    :target: https://pypi.python.org/pypi/EditorConfig
 
-.. image:: https://secure.travis-ci.org/editorconfig/editorconfig-core-py.png?branch=master
+.. image:: https://img.shields.io/pypi/wheel/EditorConfig.svg
+    :target: https://pypi.python.org/pypi/EditorConfig
+
+.. image:: https://img.shields.io/pypi/pyversions/EditorConfig.svg
+    :target: https://pypi.python.org/pypi/EditorConfig
+
+.. image:: https://secure.travis-ci.org/editorconfig/editorconfig-core-py.svg?branch=master
    :target: http://travis-ci.org/editorconfig/editorconfig-core-py
 
 EditorConfig Python Core provides the same functionality as the
-`EditorConfig C Core <https://github.com/editorconfig/editorconfig-core>`_. 
+`EditorConfig C Core <https://github.com/editorconfig/editorconfig-core>`_.
 EditorConfig Python core can be used as a command line program or as an
 importable library.
 
@@ -40,7 +48,9 @@ may want to import and use the EditorConfig Python Core directly.
 Using as a Library
 ==================
 
-Basic example use of EditorConfig Python Core as a library::
+Basic example use of EditorConfig Python Core as a library:
+
+.. code-block:: python
 
     from editorconfig import get_properties, EditorConfigError
 
@@ -54,6 +64,9 @@ Basic example use of EditorConfig Python Core as a library::
         for key, value in options.items():
             print "%s=%s" % (key, value)
 
+For details, please take a look at the `online documentation
+<http://pydocs.editorconfig.org>`_.
+
 Running Test Cases
 ==================
 
@@ -63,9 +76,13 @@ using the following commands::
     cmake .
     ctest .
 
+Use ``-DPYTHON_EXECUTABLE`` to run the tests using an alternative versions of
+Python (e.g. Python 3)::
+
+    cmake -DPYTHON_EXECUTABLE=/usr/bin/python3 .
+    ctest .
+
 License
 =======
 
-Unless otherwise stated, all files are distributed under the PSF license.  The
-odict library (editorconfig/odict.py) is distributed under the New BSD license.
-See LICENSE.txt file for details on PSF license.
+See COPYING file for licensing details.

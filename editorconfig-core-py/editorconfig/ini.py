@@ -2,7 +2,7 @@
 
 Based on code from ConfigParser.py file distributed with Python 2.6.
 
-Licensed under PSF License (see LICENSE.txt file).
+Licensed under PSF License (see LICENSE.PSF file).
 
 Changes to original ConfigParser:
 
@@ -13,13 +13,16 @@ Changes to original ConfigParser:
 
 """
 
-import re
 import posixpath
+import re
+from codecs import open
+from collections import OrderedDict
 from os import sep
-from os.path import normcase, dirname
+from os.path import dirname, normpath
+
+from editorconfig.compat import u
 from editorconfig.exceptions import ParsingError
 from editorconfig.fnmatch import fnmatch
-from editorconfig.odict import OrderedDict
 
 
 __all__ = ["ParsingError", "EditorConfigParser"]
@@ -35,19 +38,43 @@ class EditorConfigParser(object):
     # Regular expressions for parsing section headers and options.
     # Allow ``]`` and escaped ``;`` and ``#`` characters in section headers
     SECTCRE = re.compile(
-        r'\s*\['                              # [
-        r'(?P<header>([^#;]|\\#|\\;)+)'       # very permissive!
-        r'\]'                                 # ]
+        r"""
+
+        \s *                                # Optional whitespace
+        \[                                  # Opening square brace
+
+        (?P<header>                         # One or more characters excluding
+            ( [^\#;] | \\\# | \\; ) +       # unescaped # and ; characters
         )
+
+        \]                                  # Closing square brace
+
+        """, re.VERBOSE
+    )
     # Regular expression for parsing option name/values.
     # Allow any amount of whitespaces, followed by separator
     # (either ``:`` or ``=``), followed by any amount of whitespace and then
     # any characters to eol
     OPTCRE = re.compile(
-        r'\s*(?P<option>[^:=\s][^:=]*)'
-        r'\s*(?P<vi>[:=])\s*'
-        r'(?P<value>.*)$'
+        r"""
+
+        \s *                                # Optional whitespace
+        (?P<option>                         # One or more characters excluding
+            [^:=\s]                         # : a = characters (and first
+            [^:=] *                         # must not be whitespace)
         )
+        \s *                                # Optional whitespace
+        (?P<vi>
+            [:=]                            # Single = or : character
+        )
+        \s *                                # Optional whitespace
+        (?P<value>
+            . *                             # One or more characters
+        )
+        $
+
+        """, re.VERBOSE
+    )
 
     def __init__(self, filename):
         self.filename = filename
@@ -56,7 +83,7 @@ class EditorConfigParser(object):
 
     def matches_filename(self, config_filename, glob):
         """Return True if section glob matches filename"""
-        config_dirname = normcase(dirname(config_filename)).replace(sep, '/')
+        config_dirname = normpath(dirname(config_filename)).replace(sep, '/')
         glob = glob.replace("\\#", "#")
         glob = glob.replace("\\;", ";")
         if '/' in glob:
@@ -70,7 +97,7 @@ class EditorConfigParser(object):
     def read(self, filename):
         """Read and parse single EditorConfig file"""
         try:
-            fp = open(filename)
+            fp = open(filename, encoding='utf-8')
         except IOError:
             return
         self._read(fp, filename)
@@ -95,6 +122,8 @@ class EditorConfigParser(object):
             line = fp.readline()
             if not line:
                 break
+            if lineno == 0 and line.startswith(u('\ufeff')):
+                line = line[1:]  # Strip UTF-8 BOM
             lineno = lineno + 1
             # comment or blank line?
             if line.strip() == '' or line[0] in '#;':

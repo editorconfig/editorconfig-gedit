@@ -11,7 +11,7 @@ corresponding to PATTERN.  (It does not compile it.)
 
 Based on code from fnmatch.py file distributed with Python 2.6.
 
-Licensed under PSF License (see LICENSE.txt file).
+Licensed under PSF License (see LICENSE.PSF file).
 
 Changes to original fnmatch module:
 - translate function supports ``*`` and ``**`` similarly to fnmatch C library
@@ -20,20 +20,59 @@ Changes to original fnmatch module:
 import os
 import re
 
+
 __all__ = ["fnmatch", "fnmatchcase", "translate"]
 
 _cache = {}
+
+LEFT_BRACE = re.compile(
+    r"""
+
+    (?: ^ | [^\\] )     # Beginning of string or a character besides "\"
+
+    \{                  # "{"
+
+    """, re.VERBOSE
+)
+
+RIGHT_BRACE = re.compile(
+    r"""
+
+    (?: ^ | [^\\] )     # Beginning of string or a character besides "\"
+
+    \}                  # "}"
+
+    """, re.VERBOSE
+)
+
+NUMERIC_RANGE = re.compile(
+    r"""
+    (               # Capture a number
+        [+-] ?      # Zero or one "+" or "-" characters
+        \d +        # One or more digits
+    )
+
+    \.\.            # ".."
+
+    (               # Capture a number
+        [+-] ?      # Zero or one "+" or "-" characters
+        \d +        # One or more digits
+    )
+    """, re.VERBOSE
+)
+
 
 def fnmatch(name, pat):
     """Test whether FILENAME matches PATTERN.
 
     Patterns are Unix shell style:
 
-    - ``*``       matches everything except path separator
-    - ``**``      matches everything
-    - ``?``       matches any single character
-    - ``[seq]``   matches any character in seq
-    - ``[!seq]``  matches any char not in seq
+    - ``*``             matches everything except path separator
+    - ``**``            matches everything
+    - ``?``             matches any single character
+    - ``[seq]``         matches any character in seq
+    - ``[!seq]``        matches any char not in seq
+    - ``{s1,s2,s3}``    matches any of the strings given (separated by commas)
 
     An initial period in FILENAME is not special.
     Both FILENAME and PATTERN are first case-normalized
@@ -41,8 +80,17 @@ def fnmatch(name, pat):
     If you don't want this, use fnmatchcase(FILENAME, PATTERN).
     """
 
-    name = os.path.normcase(name).replace(os.sep, "/")
+    name = os.path.normpath(name).replace(os.sep, "/")
     return fnmatchcase(name, pat)
+
+
+def cached_translate(pat):
+    if not pat in _cache:
+        res, num_groups = translate(pat)
+        regex = re.compile(res)
+        _cache[pat] = regex, num_groups
+    return _cache[pat]
+
 
 def fnmatchcase(name, pat):
     """Test whether FILENAME matches PATTERN, including case.
@@ -51,48 +99,122 @@ def fnmatchcase(name, pat):
     its arguments.
     """
 
-    if not pat in _cache:
-        res = translate(pat)
-        _cache[pat] = re.compile(res)
-    return _cache[pat].match(name) is not None
+    regex, num_groups = cached_translate(pat)
+    match = regex.match(name)
+    if not match:
+        return False
+    pattern_matched = True
+    for (num, (min_num, max_num)) in zip(match.groups(), num_groups):
+        if num[0] == '0' or not (min_num <= int(num) <= max_num):
+            pattern_matched = False
+            break
+    return pattern_matched
 
-def translate(pat):
+
+def translate(pat, nested=False):
     """Translate a shell PATTERN to a regular expression.
 
     There is no way to quote meta-characters.
     """
 
-    i, n = 0, len(pat)
-    res = ''
-    while i < n:
-        c = pat[i]
-        i = i+1
-        if c == '*':
-            j = i
-            if j < n and pat[j] == '*':
-                res = res + '.*'
+    index, length = 0, len(pat)  # Current index and length of pattern
+    brace_level = 0
+    in_brackets = False
+    result = ''
+    is_escaped = False
+    matching_braces = (len(LEFT_BRACE.findall(pat)) ==
+                       len(RIGHT_BRACE.findall(pat)))
+    numeric_groups = []
+    while index < length:
+        current_char = pat[index]
+        index += 1
+        if current_char == '*':
+            pos = index
+            if pos < length and pat[pos] == '*':
+                result += '.*'
             else:
-                res = res + '[^/]*'
-        elif c == '?':
-            res = res + '.'
-        elif c == '[':
-            j = i
-            if j < n and pat[j] == '!':
-                j = j+1
-            if j < n and pat[j] == ']':
-                j = j+1
-            while j < n and pat[j] != ']':
-                j = j+1
-            if j >= n:
-                res = res + '\\['
+                result += '[^/]*'
+        elif current_char == '?':
+            result += '.'
+        elif current_char == '[':
+            if in_brackets:
+                result += '\\['
             else:
-                stuff = pat[i:j].replace('\\','\\\\')
-                i = j+1
-                if stuff[0] == '!':
-                    stuff = '^' + stuff[1:]
-                elif stuff[0] == '^':
-                    stuff = '\\' + stuff
-                res = '%s[%s]' % (res, stuff)
+                pos = index
+                has_slash = False
+                while pos < length and pat[pos] != ']':
+                    if pat[pos] == '/' and pat[pos-1] != '\\':
+                        has_slash = True
+                        break
+                    pos += 1
+                if has_slash:
+                    result += '\\[' + pat[index:(pos + 1)] + '\\]'
+                    index = pos + 2
+                else:
+                    if index < length and pat[index] in '!^':
+                        index += 1
+                        result += '[^'
+                    else:
+                        result += '['
+                    in_brackets = True
+        elif current_char == '-':
+            if in_brackets:
+                result += current_char
+            else:
+                result += '\\' + current_char
+        elif current_char == ']':
+            result += current_char
+            in_brackets = False
+        elif current_char == '{':
+            pos = index
+            has_comma = False
+            while pos < length and (pat[pos] != '}' or is_escaped):
+                if pat[pos] == ',' and not is_escaped:
+                    has_comma = True
+                    break
+                is_escaped = pat[pos] == '\\' and not is_escaped
+                pos += 1
+            if not has_comma and pos < length:
+                num_range = NUMERIC_RANGE.match(pat[index:pos])
+                if num_range:
+                    numeric_groups.append(map(int, num_range.groups()))
+                    result += "([+-]?\d+)"
+                else:
+                    inner_result, inner_groups = translate(pat[index:pos],
+                                                           nested=True)
+                    result += '\\{%s\\}' % (inner_result,)
+                    numeric_groups += inner_groups
+                index = pos + 1
+            elif matching_braces:
+                result += '(?:'
+                brace_level += 1
+            else:
+                result += '\\{'
+        elif current_char == ',':
+            if brace_level > 0 and not is_escaped:
+                result += '|'
+            else:
+                result += '\\,'
+        elif current_char == '}':
+            if brace_level > 0 and not is_escaped:
+                result += ')'
+                brace_level -= 1
+            else:
+                result += '\\}'
+        elif current_char == '/':
+            if pat[index:(index + 3)] == "**/":
+                result += "(?:/|/.*/)"
+                index += 3
+            else:
+                result += '/'
+        elif current_char != '\\':
+            result += re.escape(current_char)
+        if current_char == '\\':
+            if is_escaped:
+                result += re.escape(current_char)
+            is_escaped = not is_escaped
         else:
-            res = res + re.escape(c)
-    return res + '\Z(?ms)'
+            is_escaped = False
+    if not nested:
+        result += '\Z(?ms)'
+    return result, numeric_groups
