@@ -102,8 +102,7 @@ class EditorConfigHandler(object):
         opts = self.options
 
         # Lowercase option value for certain options
-        for name in ["end_of_line", "indent_style", "indent_size",
-            "insert_final_newline", "trim_trailing_whitespace", "charset"]:
+        for name in ["end_of_line", "indent_style", "indent_size"]:
             if name in opts:
                 opts[name] = opts[name].lower()
 
@@ -118,8 +117,3 @@ class EditorConfigHandler(object):
         if ("indent_size" in opts and "tab_width" not in opts and
             opts["indent_size"] != "tab"):
             opts["tab_width"] = opts["indent_size"]
-
-        # Set indent_size to tab_width if indent_size is "tab"
-        if ("indent_size" in opts and "tab_width" in opts and
-            opts["indent_size"] == "tab"):
-            opts["indent_size"] = opts["tab_width"]

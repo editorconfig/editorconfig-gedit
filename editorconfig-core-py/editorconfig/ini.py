@@ -14,15 +14,12 @@ Changes to original ConfigParser:
 """
 
 import re
-from codecs import open
 import posixpath
 from os import sep
 from os.path import normcase, dirname
-
 from editorconfig.exceptions import ParsingError
 from editorconfig.fnmatch import fnmatch
 from editorconfig.odict import OrderedDict
-from editorconfig.compat import u
 
 
 __all__ = ["ParsingError", "EditorConfigParser"]
@@ -73,7 +70,7 @@ class EditorConfigParser(object):
     def read(self, filename):
         """Read and parse single EditorConfig file"""
         try:
-            fp = open(filename, encoding='utf-8')
+            fp = open(filename)
         except IOError:
             return
         self._read(fp, filename)
@@ -98,8 +95,6 @@ class EditorConfigParser(object):
             line = fp.readline()
             if not line:
                 break
-            if lineno == 0 and line.startswith(u('\ufeff')):
-                line = line[1:]  # Strip UTF-8 BOM
             lineno = lineno + 1
             # comment or blank line?
             if line.strip() == '' or line[0] in '#;':

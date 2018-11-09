@@ -15,9 +15,7 @@ Discovering EditorConfig properties
 -----------------------------------
 
 The ``get_properties`` function can be used to discover EditorConfig properties
-for a given file.  Example:
-
-.. code-block:: python
+for a given file.  Example::
 
     import logging
     from editorconfig import get_properties, EditorConfigError
@@ -61,9 +59,7 @@ the current exception types:
 Exception handling example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An example of custom exception handling:
-
-.. code-block:: python
+An example of custom exception handling::
 
     import logging
     from editorconfig import get_properties
