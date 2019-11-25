@@ -79,12 +79,18 @@ class EditorConfigPluginMixin(object):
 
     def set_end_of_line(self, document, end_of_line):
         """Set line ending style based on given end_of_line property"""
-        if end_of_line == "lf":
-            document.set_property('newline-type', 0)
-        elif end_of_line == "cr":
-            document.set_property('newline-type', 1)
-        elif end_of_line == "crlf":
-            document.set_property('newline-type', 2)
+        try:
+            if end_of_line == "lf":
+                document.set_property('newline-type', 0)
+            elif end_of_line == "cr":
+                document.set_property('newline-type', 1)
+            elif end_of_line == "crlf":
+                document.set_property('newline-type', 2)
+        except TypeError:
+            # 'newline-type' is deprecated in GeditDocument >= 3.14
+            # It was replaced with 'GtkSourceFile.newline-type', which
+            # we can't use because it's a read-only property.
+            pass
 
     def set_indentation(self, view, indent_style, indent_size, tab_width):
         """Set indentation style for given view based on given properties"""
