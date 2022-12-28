@@ -23,6 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from urllib.parse import unquote, urlparse
 from gi.repository import GObject, Gedit
 from .shared import EditorConfigPluginMixin
 
@@ -44,6 +45,5 @@ class EditorConfigPlugin(GObject.Object, Gedit.WindowActivatable,
             location = document.get_file().get_location()
             if location:
                 file_uri = location.get_uri()
-                if file_uri.startswith('file:///'):
-                    return self.get_properties_from_filename(file_uri[7:])
+                return self.get_properties_from_filename(unquote(urlparse(file_uri).path))
         return {}
