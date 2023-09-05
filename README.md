@@ -48,6 +48,7 @@ The EditorConfig Gedit plugin fully supports the following EditorConfig
 * indent_style
 * trim_trailing_whitespace
 * end_of_line (only in Gedit <= 3.14)
+* max_line_length
 * root (only used by EditorConfig core)
 
 There is partial support for the following properties:
