@@ -61,6 +61,12 @@ and `tab_width` will be used for indentation size to maintain the correct width
 of tab characters.  When `indent_style` is set to "space", the `tab_width`
 property is ignored and tabs are always set to the width of `indent_size`.
 
+## Note for Developers
+
+The directory `editorconfig-core-py` is a subtree. Update it using
+
+    git subtree pull --prefix editorconfig-core-py https://github.com/editorconfig/editorconfig-core-py master
+
 [EditorConfig]: http://editorconfig.org
 [EditorConfig Python Core library]: https://github.com/editorconfig/editorconfig-core-py
 [gedit]: http://projects.gnome.org/gedit
