@@ -40,5 +40,6 @@ class EditorConfigPlugin(gedit.Plugin, EditorConfigPluginMixin):
         """Call EditorConfig core and return properties dict for document"""
         if document:
             file_uri = document.get_uri()
-            return self.get_properties_from_filename(unquote(urlparse(file_uri).path))
+            if file_uri and file_uri.startswith('file://'):
+                return self.get_properties_from_filename(unquote(urlparse(file_uri).path))
         return {}

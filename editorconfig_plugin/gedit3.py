@@ -45,5 +45,6 @@ class EditorConfigPlugin(GObject.Object, Gedit.WindowActivatable,
             location = document.get_file().get_location()
             if location:
                 file_uri = location.get_uri()
-                return self.get_properties_from_filename(unquote(urlparse(file_uri).path))
+                if file_uri.startswith('file://'):
+                    return self.get_properties_from_filename(unquote(urlparse(file_uri).path))
         return {}
