@@ -42,6 +42,7 @@ class EditorConfigPluginMixin(object):
         self.set_end_of_line(document, props.get('end_of_line'))
         self.set_trim_trailing_whitespace(document,
                 props.get('trim_trailing_whitespace'))
+        self.set_right_margin(view, props.get('max_line_length'))
 
     def get_properties_from_filename(self, filename):
         """Retrieve dict of EditorConfig properties for the given filename"""
@@ -76,6 +77,13 @@ class EditorConfigPluginMixin(object):
             properties['trim_trailing_whitespace'] = True
         else:
             properties['trim_trailing_whitespace'] = False
+
+        # Convert max_line_length to a number
+        if 'max_line_length' in properties:
+            try:
+                properties['max_line_length'] = int(properties['max_line_length'])
+            except ValueError:
+                del properties['max_line_length']
 
     def set_end_of_line(self, document, end_of_line):
         """Set line ending style based on given end_of_line property"""
@@ -132,3 +140,9 @@ class EditorConfigPluginMixin(object):
                     break
             if not whitespace_start.equal(end_of_line):
                 document.delete(whitespace_start, end_of_line)
+
+    def set_right_margin(self, view, max_line_length):
+        """Show the right margin at the given position"""
+        if max_line_length:
+            view.set_property('show-right-margin', True)
+            view.set_property('right-margin-position', max_line_length)
