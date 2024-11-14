@@ -68,9 +68,9 @@ The directory `editorconfig-core-py` is a subtree. Update it using
 
     git subtree pull --prefix editorconfig-core-py https://github.com/editorconfig/editorconfig-core-py master
 
-[EditorConfig]: http://editorconfig.org
+[EditorConfig]: https://editorconfig.org/
 [EditorConfig Python Core library]: https://github.com/editorconfig/editorconfig-core-py
-[gedit]: http://projects.gnome.org/gedit
-[properties]: http://editorconfig.org/#supported-properties
+[gedit]: https://gedit-technology.github.io/apps/gedit/
+[properties]: https://editorconfig.org/#supported-properties
 [tags]: https://github.com/editorconfig/editorconfig-gedit/tags
 [latest]: https://github.com/editorconfig/editorconfig-gedit/archive/v0.5.1.tar.gz
