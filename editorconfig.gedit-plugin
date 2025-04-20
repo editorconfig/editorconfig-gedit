@@ -6,5 +6,5 @@ Name=EditorConfig
 Description=EditorConfig Gedit plugin
 Authors=Trey Hunner <treyhunner@gmail.com>
 Copyright=Copyright © 2011-2013 EditorConfig Team
-Website=http://editorconfig.org
+Website=https://editorconfig.org
 Version=0.5.3
